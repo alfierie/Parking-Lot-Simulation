@@ -1,51 +1,114 @@
-# Parking Lot Simulation using Streamlit and SimPy
+# Parking Lot Simulation
 
-## Overview
+An interactive stochastic simulation of a parking lot system built with Streamlit for the **Stochastic Modeling and Simulation** course.
 
-This project is a stochastic simulation of a parking lot system developed for the Stochastic Modeling and Simulation course.
+The simulation models vehicle arrivals, parking occupancy, and vehicle departures under uncertainty. Users can modify parameters in real time and observe how the parking lot behaves through a live animated visualization.
 
-The simulation models vehicle arrivals, parking occupancy, waiting queues, and vehicle departures under uncertain conditions. Users can interactively modify system parameters and observe how the parking lot performance changes in real time.
+---
 
-## Features
+## Project Overview
 
-* Interactive Streamlit dashboard
-* Stochastic vehicle arrivals using Poisson processes
-* Random parking durations using Normal distributions
-* Real-time parking occupancy visualization
-* Queue length monitoring
-* Performance statistics
-* Sensitivity analysis for different parking capacities
+Parking facilities experience uncertain vehicle arrivals and departures throughout the day. Understanding how these stochastic factors affect occupancy can help managers optimize parking capacity and improve user experience.
 
-## Stochastic Components
+This project simulates a parking lot where:
+
+* Vehicles arrive randomly
+* Parking durations vary randomly
+* Parking spaces are limited
+* Occupancy changes dynamically over time
+
+The simulation allows users to experiment with different scenarios and observe their effects immediately.
+
+---
+
+## Objectives
+
+* Model a real-world parking lot using stochastic processes
+* Visualize parking occupancy through animation
+* Analyze the impact of arrival rates and parking durations
+* Demonstrate the use of simulation for decision making
+
+---
+
+## ⚙️ Features
+
+### Interactive Controls
+
+Users can adjust:
+
+* Parking Capacity
+* Vehicle Arrival Probability
+* Average Parking Duration
+* Simulation Length
+* Animation Speed
+
+### Live Animation
+
+The parking lot updates in real time:
+
+* 🟩 Empty Parking Space
+* 🚗 Occupied Parking Space
+
+Vehicles continuously enter and leave the parking lot during the simulation.
+
+### Real-Time Metrics
+
+The dashboard displays:
+
+* Current Occupancy
+* Occupancy Percentage
+* Total Vehicle Arrivals
+* Total Vehicle Departures
+
+### Dynamic Visualization
+
+* Live parking lot animation
+* Occupancy trend chart
+* Performance monitoring dashboard
+
+---
+
+## Stochastic Modeling
 
 ### Vehicle Arrivals
 
-Vehicle arrivals are modeled using a Poisson process:
+Vehicle arrivals are modeled probabilistically.
 
-* Arrival Rate (λ): Vehicles per hour
-* Inter-arrival times follow an Exponential Distribution
+At each simulation step:
+
+* A vehicle may arrive based on the selected arrival probability.
+* Higher probabilities produce busier parking lots.
 
 ### Parking Duration
 
-Parking duration is modeled using a Normal Distribution:
+Parking durations are generated randomly using a Normal Distribution:
 
-* Mean parking duration configurable by user
-* Standard deviation = 20% of mean duration
+Duration ~ Normal(Mean Duration, 0.3 × Mean Duration)
 
-### Queueing System
+This reflects real-world variability in parking behavior.
 
-When the parking lot is full:
-
-* Vehicles enter a waiting queue
-* Vehicles are served on a First-Come-First-Served basis
+---
 
 ## Technologies Used
 
 * Python
 * Streamlit
-* SimPy
 * Pandas
-* Plotly
+
+---
+
+## Project Structure
+
+```text
+parking-lot-simulation/
+│
+├── app.py
+├── requirements.txt
+├── README.md
+└── screenshots/
+```
+
+---
 
 ## Installation
 
@@ -62,60 +125,53 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-## Run the Application
+---
+
+## Running the Application
+
+Start the Streamlit application:
 
 ```bash
 streamlit run app.py
 ```
 
-## Adjustable Parameters
+The application will automatically open in your browser.
 
-* Parking Capacity
-* Vehicle Arrival Rate
-* Average Parking Duration
-* Simulation Duration
+---
 
-## Performance Metrics
+## Example Insights
 
-The simulation reports:
+Using the simulation, users can investigate questions such as:
 
-* Total Vehicles Arrived
-* Vehicles Served
-* Average Waiting Time
-* Maximum Queue Length
-* Parking Occupancy Rate
+* How many parking spaces are needed?
+* What happens during peak traffic periods?
+* How does parking duration affect occupancy?
+* At what point does the parking lot become saturated?
 
-## Sensitivity Analysis
+---
 
-Users can compare system performance under different parking capacities:
+## Academic Context
 
-* Small Parking Lot
-* Medium Parking Lot
-* Large Parking Lot
+This project was developed as part of a Stochastic Modeling and Simulation course assignment.
 
-This helps identify the optimal parking capacity while balancing utilization and waiting times.
+The project demonstrates:
 
-## Project Structure
+* Stochastic system modeling
+* Random event simulation
+* Interactive visualization
+* Sensitivity analysis
+* Data-driven decision making
 
-```text
-parking-lot-simulation/
-│
-├── app.py
-├── requirements.txt
-├── README.md
-└── screenshots/
-```
+---
 
-## Authors
+## Team Members
 
-Group Members:
+Replace with your actual group members:
 
-* Student 1
-* Student 2
-* Student 3
+Diffie Alfierie Iswanto - 24/533049/TK/59056
 
-Universitas Gadjah Mada
+---
 
 ## License
 
-This project is developed for educational purposes.
+This project is intended for educational purposes only.
