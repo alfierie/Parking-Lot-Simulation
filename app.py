@@ -268,4 +268,3 @@ if st.button("Run Simulation"):
 
         if count >= capacity:
             break
-```
