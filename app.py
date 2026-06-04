@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import random
-import simpy
+import time
 
 st.set_page_config(
     page_title="Parking Lot Simulation",
@@ -12,259 +11,209 @@ st.set_page_config(
 st.title("🚗 Parking Lot Simulation")
 st.markdown(
     """
-    Stochastic Modeling and Simulation Project
+    Interactive stochastic parking lot simulation.
 
-    Vehicle arrivals follow a Poisson process while parking durations
-    follow a Normal distribution.
+    Vehicle arrivals are random and parking durations vary.
+    Watch vehicles enter and leave the parking lot in real time.
     """
 )
 
-# =====================================
-# Sidebar Parameters
-# =====================================
+# =====================================================
+# Sidebar Controls
+# =====================================================
 
 st.sidebar.header("Simulation Parameters")
 
 capacity = st.sidebar.slider(
     "Parking Capacity",
-    10,
-    200,
-    50
+    min_value=20,
+    max_value=200,
+    value=50,
+    step=10
 )
 
-arrival_rate = st.sidebar.slider(
-    "Arrival Rate (vehicles/hour)",
-    5,
-    100,
-    30
+arrival_probability = st.sidebar.slider(
+    "Arrival Probability",
+    min_value=0.01,
+    max_value=0.50,
+    value=0.15,
+    step=0.01
 )
 
-avg_parking_time = st.sidebar.slider(
-    "Average Parking Duration (minutes)",
-    30,
-    300,
-    120
+avg_parking_duration = st.sidebar.slider(
+    "Average Parking Duration (steps)",
+    min_value=5,
+    max_value=50,
+    value=20
 )
 
-simulation_hours = st.sidebar.slider(
-    "Simulation Duration (hours)",
-    1,
-    24,
-    8
+simulation_steps = st.sidebar.slider(
+    "Simulation Steps",
+    min_value=50,
+    max_value=500,
+    value=200
 )
 
-# =====================================
-# Statistics
-# =====================================
+speed = st.sidebar.slider(
+    "Animation Speed (seconds)",
+    min_value=0.05,
+    max_value=1.0,
+    value=0.20,
+    step=0.05
+)
 
-stats = {
-    "arrived": 0,
-    "served": 0,
-    "wait_times": [],
-    "occupancy_history": [],
-    "queue_history": []
-}
+# =====================================================
+# Start Button
+# =====================================================
 
-# =====================================
-# Vehicle Process
-# =====================================
+if st.button("▶ Start Simulation"):
 
-def vehicle(env, name, parking_lot):
+    parking_slots = [None] * capacity
 
-    arrival_time = env.now
+    occupancy_history = []
 
-    stats["arrived"] += 1
+    total_arrivals = 0
+    total_departures = 0
 
-    with parking_lot.request() as request:
+    stats_placeholder = st.empty()
+    parking_placeholder = st.empty()
+    chart_placeholder = st.empty()
 
-        yield request
+    for current_step in range(simulation_steps):
 
-        wait_time = env.now - arrival_time
-        stats["wait_times"].append(wait_time)
+        # -----------------------------------------
+        # Cars leaving
+        # -----------------------------------------
 
-        stats["served"] += 1
+        for i in range(capacity):
 
-        duration = max(
-            10,
-            random.normalvariate(
-                avg_parking_time,
-                avg_parking_time * 0.2
-            )
+            if parking_slots[i] is not None:
+
+                parking_slots[i] -= 1
+
+                if parking_slots[i] <= 0:
+                    parking_slots[i] = None
+                    total_departures += 1
+
+        # -----------------------------------------
+        # New arrival
+        # -----------------------------------------
+
+        if random.random() < arrival_probability:
+
+            total_arrivals += 1
+
+            empty_slots = [
+                i for i, slot in enumerate(parking_slots)
+                if slot is None
+            ]
+
+            if empty_slots:
+
+                chosen_slot = random.choice(empty_slots)
+
+                duration = max(
+                    1,
+                    int(
+                        random.normalvariate(
+                            avg_parking_duration,
+                            avg_parking_duration * 0.3
+                        )
+                    )
+                )
+
+                parking_slots[chosen_slot] = duration
+
+        # -----------------------------------------
+        # Statistics
+        # -----------------------------------------
+
+        occupied = sum(
+            slot is not None
+            for slot in parking_slots
         )
 
-        yield env.timeout(duration)
+        occupancy_rate = (
+            occupied / capacity
+        ) * 100
 
-# =====================================
-# Arrival Generator
-# =====================================
-
-def vehicle_generator(env, parking_lot):
-
-    counter = 0
-
-    while True:
-
-        interarrival = random.expovariate(
-            arrival_rate / 60
+        occupancy_history.append(
+            occupancy_rate
         )
 
-        yield env.timeout(interarrival)
+        # -----------------------------------------
+        # Metrics
+        # -----------------------------------------
 
-        counter += 1
+        stats_placeholder.columns(4)
 
-        env.process(
-            vehicle(
-                env,
-                f"Car {counter}",
-                parking_lot
-            )
+        col1, col2, col3, col4 = stats_placeholder.columns(4)
+
+        col1.metric(
+            "Occupied",
+            occupied
         )
 
-# =====================================
-# Monitoring Process
-# =====================================
-
-def monitor(env, parking_lot):
-
-    while True:
-
-        occupancy = len(parking_lot.users)
-
-        stats["occupancy_history"].append({
-            "time": env.now,
-            "occupancy": occupancy
-        })
-
-        stats["queue_history"].append({
-            "time": env.now,
-            "queue": len(parking_lot.queue)
-        })
-
-        yield env.timeout(5)
-
-# =====================================
-# Run Simulation
-# =====================================
-
-if st.button("Run Simulation"):
-
-    env = simpy.Environment()
-
-    parking_lot = simpy.Resource(
-        env,
-        capacity=capacity
-    )
-
-    env.process(
-        vehicle_generator(
-            env,
-            parking_lot
+        col2.metric(
+            "Occupancy %",
+            f"{occupancy_rate:.1f}"
         )
-    )
 
-    env.process(
-        monitor(
-            env,
-            parking_lot
+        col3.metric(
+            "Arrivals",
+            total_arrivals
         )
-    )
 
-    env.run(
-        until=simulation_hours * 60
-    )
+        col4.metric(
+            "Departures",
+            total_departures
+        )
 
-    avg_wait = (
-        sum(stats["wait_times"])
-        / len(stats["wait_times"])
-        if stats["wait_times"]
-        else 0
-    )
+        # -----------------------------------------
+        # Parking Lot Visualization
+        # -----------------------------------------
 
-    occupancy_df = pd.DataFrame(
-        stats["occupancy_history"]
-    )
+        grid_html = """
+        <div style='font-size:35px; line-height:1.6'>
+        """
 
-    queue_df = pd.DataFrame(
-        stats["queue_history"]
-    )
+        columns = 10
 
-    col1, col2, col3, col4 = st.columns(4)
+        for i in range(capacity):
 
-    col1.metric(
-        "Vehicles Arrived",
-        stats["arrived"]
-    )
-
-    col2.metric(
-        "Vehicles Served",
-        stats["served"]
-    )
-
-    col3.metric(
-        "Average Wait (min)",
-        round(avg_wait, 2)
-    )
-
-    col4.metric(
-        "Max Queue",
-        queue_df["queue"].max()
-    )
-
-    st.subheader("Parking Occupancy")
-
-    fig_occ = px.line(
-        occupancy_df,
-        x="time",
-        y="occupancy",
-        title="Occupancy Over Time"
-    )
-
-    st.plotly_chart(
-        fig_occ,
-        use_container_width=True
-    )
-
-    st.subheader("Queue Length")
-
-    fig_queue = px.line(
-        queue_df,
-        x="time",
-        y="queue",
-        title="Queue Length Over Time"
-    )
-
-    st.plotly_chart(
-        fig_queue,
-        use_container_width=True
-    )
-
-    st.subheader("Current Parking Lot")
-
-    occupied = min(
-        occupancy_df["occupancy"].iloc[-1],
-        capacity
-    )
-
-    rows = 10
-    cols = max(1, capacity // rows)
-
-    count = 0
-
-    for _ in range(rows):
-
-        columns = st.columns(cols)
-
-        for col in columns:
-
-            if count < occupied:
-                col.markdown("🟥")
+            if parking_slots[i] is None:
+                grid_html += "🟩"
             else:
-                col.markdown("🟩")
+                grid_html += "🚗"
 
-            count += 1
+            if (i + 1) % columns == 0:
+                grid_html += "<br>"
 
-            if count >= capacity:
-                break
+        grid_html += "</div>"
 
-        if count >= capacity:
-            break
+        parking_placeholder.markdown(
+            f"""
+            ### Parking Lot Animation
+
+            🚪 Entrance
+
+            {grid_html}
+            """,
+            unsafe_allow_html=True
+        )
+
+        # -----------------------------------------
+        # Occupancy Chart
+        # -----------------------------------------
+
+        chart_df = pd.DataFrame({
+            "Occupancy %": occupancy_history
+        })
+
+        chart_placeholder.line_chart(
+            chart_df
+        )
+
+        time.sleep(speed)
+
+    st.success("Simulation Complete!")
