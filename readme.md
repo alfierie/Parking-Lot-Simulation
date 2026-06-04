@@ -1,6 +1,6 @@
 # Parking Lot Simulation
 
-An interactive stochastic simulation of a parking lot system built with Streamlit for the **Stochastic Modeling and Simulation** course.
+An interactive stochastic simulation of a parking lot system built with Streamlit
 
 The simulation models vehicle arrivals, parking occupancy, and vehicle departures under uncertainty. Users can modify parameters in real time and observe how the parking lot behaves through a live animated visualization.
 
@@ -165,8 +165,6 @@ The project demonstrates:
 ---
 
 ## Team Members
-
-Replace with your actual group members:
 
 Diffie Alfierie Iswanto - 24/533049/TK/59056
 
